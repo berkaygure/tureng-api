@@ -1,32 +1,41 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import translator from './translate';
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace;
-	//
-	// Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-	// MY_DURABLE_OBJECT: DurableObjectNamespace;
-	//
-	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-	// MY_BUCKET: R2Bucket;
-	//
-	// Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
-	// MY_SERVICE: Fetcher;
-	//
-	// Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
-	// MY_QUEUE: Queue;
 }
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		return new Response('Hello World!');
+		// only allow GET requests
+		if (request.method !== 'GET') {
+			return new Response('Method not allowed', { status: 405 });
+		}
+
+		const params = new URL(request.url).searchParams;
+
+		const sourceLang = params.get('sl') || 'tr';
+		const targetLang = params.get('tl') || 'en';
+		const word = params.get('q');
+
+		// Check if the languages are valid
+		if (!(translator.isValidLanguage(sourceLang) && translator.isValidLanguage(targetLang))) {
+			return new Response('Invalid language', { status: 400 });
+		}
+
+		// Check if the translation is supported
+		if (!translator.canTranslate(sourceLang, targetLang)) {
+			return new Response('Translation not supported', { status: 400 });
+		}
+
+		// Check if the word is provided
+		if (!word) {
+			return new Response('Q param is required', { status: 400 });
+		}
+
+		const translations = await translator.translate(sourceLang, targetLang, word);
+		return new Response(JSON.stringify(translations), {
+			headers: { 'content-type': 'application/json' },
+		});
 	},
 };
