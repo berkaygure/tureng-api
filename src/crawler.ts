@@ -13,9 +13,10 @@ function extractLinks(html: string): Translation[] {
 		const category = $(el).find('td').eq(1).text().trim();
 		const q = $(el).find('td').eq(2).find('a').text().trim();
 		const translated = $(el).find('td').eq(3).find('a').text().trim();
+		const path = $(el).find('td').eq(2).find('a').attr('href') || '';
 
 		if (!q) return;
-		translations.push({ category, q, translated, key: key++ });
+		translations.push({ category, q, translated, key: key++, path });
 	});
 
 	return translations;

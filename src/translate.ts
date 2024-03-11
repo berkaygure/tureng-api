@@ -9,6 +9,7 @@ export interface Translation {
 	q: string;
 	translated: string;
 	key: number;
+	path: string;
 }
 
 const languageTranslationsMap: Record<Language, Language[]> = {
