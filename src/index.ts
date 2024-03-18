@@ -34,7 +34,11 @@ export default {
 		}
 
 		const translations = await translator.translate(sourceLang, targetLang, word);
-		return new Response(JSON.stringify(translations), {
+
+		// need to limit response of the translations to 10 because of the Tureng's request
+		const limitedTranslations = translations.slice(0, 10);
+
+		return new Response(JSON.stringify(limitedTranslations), {
 			headers: { 'content-type': 'application/json' },
 		});
 	},
